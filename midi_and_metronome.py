@@ -29,12 +29,12 @@ for i,note in enumerate(notes.keys()):
     #print(notes[note])
 #print(notes)
 
-def play_note(note, octave=4):
+def play_note(note, seconds, octave=4):
     if octave >= 8:
         octave = 8
-    frequency = note * 2 ** (((octave*12)-48) / 12)
+    frequency = 440*2**((note -69)/12)
     fs = 44100  # 44100 samples per second
-    seconds = 1 # Note duration - integer
+    # seconds = 1 # Note duration - integer
 
     # Generate array with seconds*sample_rate steps, ranging between 0 and seconds
     t = numpy.linspace(0, seconds, seconds * fs, False)
@@ -51,8 +51,8 @@ def play_note(note, octave=4):
     play_obj = simpleaudio.play_buffer(audio, 1, 2, fs)
 
 # Remove this after testing is done
-play_note(notes[2], octave = 4)
-time.sleep(1)
+#play_note(notes[2], octave = 4)
+#time.sleep(1)
 
 # Create a metronome, the argument is bpm and mode, mode is the numerator of the time signature.
 # For example, 4/4 has a mode of 4, 3/4 has a mode of 3, and 6/8 has a mode of 6
@@ -64,7 +64,7 @@ def metronome(bpm, mode):
 
     multiple = 8
     t=0
-    while t<10:
+    while t < mode + 1:
         wait(delay)
 
         # increment count after every wait and beat after ever 4 counts

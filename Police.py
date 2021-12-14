@@ -5,6 +5,8 @@ date: 2021year 10month 10day
 """
 import pygame
 
+from Thief import Thief
+
 class Police():
 
     def __init__(self,ai_settings,screen,police_speed):
@@ -45,8 +47,11 @@ class Police():
         else:
             self.image = self.image1
 
-    def blitme(self):
+    def blitme(self,police_speed):
+        thief = Thief(self.ai_settings, self.screen)
         """在指定位置绘制飞船"""
         if self.rect.centerx>=50:
-            self.rect.centerx = self.rect.centerx + self.speed - self.ai_settings.thief_speed_factor
+            self.rect.centerx = police_speed*(thief.rect.centerx)#self.rect.centerx + self.speed+police_speed - self.ai_settings.thief_speed_factor
+        else:
+            self.rect.centerx = police_speed*(thief.rect.centerx)#self.rect.centerx +self.speed+police_speed
         self.screen.blit(self.image, self.rect)

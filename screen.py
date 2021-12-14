@@ -7,6 +7,7 @@ date: 2021year 10month 10day
 import pygame
 from CreateMIDIScore import create_score
 from PIL import Image
+import pretty_midi
 from midi_and_metronome import metronome
 #from pygame.locals import *
 pygame.init()
@@ -14,9 +15,15 @@ pygame.init()
 class Settings():
     def __init__(self):
         # 屏幕设置
-
-        create_score('en002a.mid')
+        self.midi='en002a.mid'
+        create_score(self.midi)
+        midi_data = pretty_midi.PrettyMIDI(self.midi)
+        self.end_time=midi_data.get_end_time()
+        self.bpm=midi_data.get_tempo_changes()[1][0]
+        self.notesClass=midi_data.instruments[0].notes
+        self.firstPitch=midi_data.instruments[0].notes[0].pitch
         im = Image.open("midiscore.png")
+        self.score_width =im.size[0]
         img_size = im.size
         region = im.crop((20, img_size[1]//2-40,img_size[0]-20 , img_size[1]//2+40))
         region.save("midiscore.png")
@@ -31,7 +38,7 @@ class Settings():
         self.bar_color=250,0,0
         self.bar_width=5
         self.bar_height=150
-        self.bar_rect = pygame.Rect(200, 0, self.bar_width, self.bar_height)
+        self.bar_rect = pygame.Rect(0.12925*self.score_width, 0, self.bar_width, self.bar_height)
 
         #self.background = pygame.transform.scale(self.background,(int(self.back_rect.width * 1),int(self.back_rect.height * 1))).convert()
 

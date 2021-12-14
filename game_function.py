@@ -7,6 +7,8 @@ import sys
 
 import pygame
 
+from recording import recordingTool
+
 step=0
 
 def check_keydown_events(event,ai_settings,screen,thief,police):
@@ -33,7 +35,7 @@ def check_events(ai_settings,screen,thief,police):
         elif event.type==pygame.KEYUP:
             check_keyup_events(event,police)
 
-def update_screen(ai_settings,screen,thief,police,step,step_score, win, image_Win,lose, image_Lose):
+def update_screen(ai_settings,screen,thief,police,step,step_score, win, image_Win,lose, image_Lose,police_speed):
     """更新屏幕上的图像，并切换到新屏幕"""
     # 每次循环时都重绘屏幕
     if step<=ai_settings.rect.width:
@@ -44,10 +46,10 @@ def update_screen(ai_settings,screen,thief,police,step,step_score, win, image_Wi
         screen.blit(ai_settings.background, (0 - step, 0))
         screen.blit(ai_settings.background, (ai_settings.rect.width - step, 0))
     if step_score<=ai_settings.score.get_width():
-        screen.blit(ai_settings.score, (200-step_score,-50))
+        screen.blit(ai_settings.score, (-step_score,-50))
     #在飞船和外星人后面重绘所有子弹
     thief.blitme()
-    police.blitme()
+    police.blitme(police_speed)
     #draw the bar
     pygame.draw.rect(screen, ai_settings.bar_color, ai_settings.bar_rect)
     if win:
