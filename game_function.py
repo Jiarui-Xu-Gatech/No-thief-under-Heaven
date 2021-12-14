@@ -15,14 +15,14 @@ def check_keydown_events(event,ai_settings,screen,thief,police):
     """响应按键"""
     if event.key == pygame.K_RIGHT:
         # 向右移动飞船
-        police.speed=3
+        police.speed=police.speed+3
         police.rect.centerx=police.rect.centerx+1
     elif event.key==pygame.K_q:
         sys.exit()
 
 def check_keyup_events(event,police):
     if event.key == pygame.K_RIGHT:
-        police.speed = 1
+        police.speed = police.speed
 
 def check_events(ai_settings,screen,thief,police):
     """响应按键和鼠标事件"""

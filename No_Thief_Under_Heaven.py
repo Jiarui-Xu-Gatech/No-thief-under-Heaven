@@ -95,8 +95,9 @@ def run_game():
             win=True
 
         gf.check_events(ai_settings, screen, thief, police)
-        police_speed=0
-        if time%100==0:
+        #police_speed = 0
+        police_speed=police.speed
+        if time%10==0:
             thief.update()
             police.update()
         if time%200==0:
