@@ -75,11 +75,18 @@ def run_game():
     gt_arr, tempo, total_step = midi_arr(ai_settings.midi)
     step_cur=0
     time_limit=1
-
+    note_list = []
     #####
 
 
     while True:
+        #####
+        #record_pitch = recordingTool()
+        #if block_time <= time_limit:
+        #    note_list.append(record_pitch)
+        #else:
+        #    time_limit += 1
+        ######
         time_start=ti.time()
         time+=1
         if time>=timelimited:
@@ -94,18 +101,17 @@ def run_game():
             police.update()
         if time%200==0:
             #######
-            note_list = []
-            while True:
-                if block_time <= time_limit:
-                    note_list.append(recordingTool())
-                else:
-                    time_limit += 1
-                    break
+            note_list.append(recordingTool())
             step_cur = policeman_step(note_list, midi_note(ai_settings.notesClass, block_time), step_cur)
             ########
             police_speed=step_cur/total_step#0.5*generate_score(midi_note(ai_settings.notesClass,block_time),recordingTool())
-            print(midi_note(ai_settings.notesClass,block_time))
+            print(block_time)
+            print(note_list)
             print(recordingTool())
+            print(police_speed)
+            note_list = []
+            #print(midi_note(ai_settings.notesClass,block_time))
+            #print(recordingTool())
         if not only_m==0:
             gf.update_screen(ai_settings, screen, thief, police, step, step_score, win, image_Win, lose, image_Lose,police_speed)
         else:
