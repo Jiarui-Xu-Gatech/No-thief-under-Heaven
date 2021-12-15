@@ -64,6 +64,8 @@ def run_game():
     win=False
     image_Lose=pygame.image.load('game_over.png')
     lose=False
+    image_Piano=pygame.image.load('pianoRoll.png')
+    image_Piano = pygame.transform.scale(image_Piano,( int(image_Piano.get_width()), int(image_Piano.get_height() * 340 / 670)))
     time=0
     tempo_para=1000
     timelimited=ai_settings.score.get_width()*tempo_para/ai_settings.tempo-500
@@ -114,7 +116,7 @@ def run_game():
             #print(midi_note(ai_settings.notesClass,block_time))
             #print(recordingTool())
         if not only_m==0:
-            gf.update_screen(ai_settings, screen, thief, police, step, step_score, win, image_Win, lose, image_Lose,police_speed)
+            gf.update_screen(ai_settings, screen, thief, police, step, step_score, win, image_Win, lose, image_Lose,police_speed,image_Piano)
         else:
             metronome(ai_settings.bpm, 4)
             only_m=1

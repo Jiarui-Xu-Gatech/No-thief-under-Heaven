@@ -35,7 +35,7 @@ def check_events(ai_settings,screen,thief,police):
         elif event.type==pygame.KEYUP:
             check_keyup_events(event,police)
 
-def update_screen(ai_settings,screen,thief,police,step,step_score, win, image_Win,lose, image_Lose,police_speed):
+def update_screen(ai_settings,screen,thief,police,step,step_score, win, image_Win,lose, image_Lose,police_speed,image_Piano):
     """更新屏幕上的图像，并切换到新屏幕"""
     # 每次循环时都重绘屏幕
     if step<=ai_settings.rect.width:
@@ -52,6 +52,7 @@ def update_screen(ai_settings,screen,thief,police,step,step_score, win, image_Wi
     police.blitme(police_speed)
     #draw the bar
     pygame.draw.rect(screen, ai_settings.bar_color, ai_settings.bar_rect)
+    screen.blit(image_Piano,(10,-70))
     if win:
         screen.blit(image_Win, (ai_settings.rect.width * 0.5-200, ai_settings.rect.height * 0.5-200))
     elif lose:
