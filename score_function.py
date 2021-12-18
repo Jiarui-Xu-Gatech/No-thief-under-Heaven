@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
 def in_one_octave(pitch_ref, pitch_est):
     diff = abs(pitch_ref - pitch_est)
   

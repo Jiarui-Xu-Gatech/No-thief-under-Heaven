@@ -14,8 +14,6 @@ from scipy.io.wavfile import write
 # Helper Functions
 def ToolFreq2Midi(fInHz, fA4InHz=440):
 
-
-
     def convert_freq2midi_scalar(f, fA4InHz):
 
         if f <= 0:
@@ -32,7 +30,6 @@ def ToolFreq2Midi(fInHz, fA4InHz=440):
         midi[k] = convert_freq2midi_scalar(f, fA4InHz)
 
     return (midi)
-
 
 def generateMetronome(filename):
     f_low = ToolFreq2Midi(400)
@@ -70,7 +67,6 @@ def generateMetronome(filename):
     wav_name = filename[:-4]
     write(wav_name + ".wav", samplerate, syn.astype(np.float32))
   
-
 def midi_arr(midi_path):
     midi_data = pretty_midi.PrettyMIDI(midi_path)
     #tempo = midi_data.estimate_tempo()
@@ -95,9 +91,8 @@ def get_gt(t_cur, gt_arr):
     if t_cur >= gt_arr[0] and t_cur <= gt_arr[1]:
         gt_cur = gt_arr[3]
     elif t_cur <= gt_arr[2] and t_cur >= gt_arr[1]: 
-        gt_cur = -2
+        gt_cur = 'in_tolerance'
     else:
         gt_cur = -1
     return gt_cur
 
-# a, b, c = midi_arr('/home/lino/Desktop/group 6/test_POP909/714.mid')

@@ -1,129 +1,145 @@
-# -*- coding:utf-8 -*-
-"""
-author: 11238
-date: 2021year 10month 10day
-"""
 import pygame
-
 from midi_and_metronome import metronome
 from midi_and_metronome import play_note
-
-from score_function import generate_score
-
-from midi_note import midi_note
-
-from recording import recordingTool
-
 import time as ti
-
-import sys
-
 from pygame.sprite import Group
-
 from screen import Settings
-
 import game_function as gf
-
 from Thief import Thief
-
 from Police import Police
+import pyaudio
+from lino_settings import lino_settings
 
-from condition import policeman_step
-
-from lino_settings import midi_arr
-
-
-#import game_functions as gf
 
 def run_game():
 
-
-    #初始化游戏并创建一个屏幕对象
+    # Initialize 
     pygame.init()
     ai_settings = Settings()
+    p = pyaudio.PyAudio()
+    lino = lino_settings()
+    inputFile = input("Please input your file name:")
+    # PATH_TO_MIDI = 'test_CSD/midi/en0{}a.mid'.format(inputFile)
+    PATH_TO_MIDI = 'test_POP909/{}.mid'.format(inputFile)
+    ai_settings.midi = PATH_TO_MIDI
+    
+    # Initialize the Game Interfave
     screen = pygame.display.set_mode((ai_settings.screen_width,ai_settings.screen_height))
     ai_settings.rect = screen.get_rect()
     pygame.display.set_caption('No Thief Under Heaven')
     ai_settings.background = pygame.transform.scale(ai_settings.background,(ai_settings.screen_width+1,ai_settings.screen_height)).convert()
     score_ratio=0.5
-    ai_settings.score = pygame.transform.scale(ai_settings.score,(int(ai_settings.score.get_width()*ai_settings.screen_height * score_ratio/ai_settings.score.get_height()), int(ai_settings.screen_height * score_ratio))).convert_alpha()
+    lino_score_width, lino_score, lino_bar_rect =ai_settings.music_score()
+    lino_score = pygame.transform.scale(
+        lino_score, 
+        (int(lino_score.get_width() * ai_settings.screen_height * score_ratio / lino_score.get_height()), int(ai_settings.screen_height) * score_ratio)).convert_alpha()
+    
+    # Open Game and Play a Standard Tone Followed by a Metro
     screen.blit(ai_settings.background, (0, 0))
     ti.sleep(1)
-    play_note(ai_settings.firstPitch,1, octave = ai_settings.firstPitch//12)
+    end_time, bpm, firstPitch = ai_settings.process()
+    play_note(firstPitch,1, octave = firstPitch//12)
     pygame.display.flip()
     ti.sleep(1)
-
-
-
     thief = Thief(ai_settings, screen)
     police=Police(ai_settings, screen, 1)
     step=0
-    step_score=0.1034*ai_settings.score_width
+    step_score=0.1034 * lino_score_width
     image_Win = pygame.image.load('you_win2.png')
-    image_Win=pygame.transform.scale(image_Win,(int(image_Win.get_width()*73/670), int(image_Win.get_height()*73/670))).convert_alpha()
+    image_Win=pygame.transform.scale(
+        image_Win,
+        (int(image_Win.get_width()*73/670), 
+        int(image_Win.get_height()*73/670))).convert_alpha()     
     win=False
     image_Lose=pygame.image.load('game_over.png')
     lose=False
-    image_Piano=pygame.image.load('pianoRoll.png')
-    image_Piano = pygame.transform.scale(image_Piano,( int(image_Piano.get_width()), int(image_Piano.get_height() * 340 / 670)))
     time=0
-    tempo_para=1000
-    timelimited=ai_settings.score.get_width()*tempo_para/ai_settings.tempo-500
-    block_time=0
     step_time=0
     only_m=0
 
-    #####
-    gt_arr, tempo, total_step = midi_arr(ai_settings.midi)
-    step_cur=0
-    time_limit=1
-    note_list = []
-    #####
+    midi_length = lino.get_midi_length(PATH_TO_MIDI)
+    step_score_blank_left = 60/600 * lino_score.get_width()
+    step_score_blank_right = 51/600 * lino_score.get_width()
 
+    
+    # Open Stream
+    stream = p.open(format=lino.pyaudio_format,
+                    channels=lino.n_channels,
+                    rate=lino.samplerate,
+                    input=True,
+                    frames_per_buffer=lino.buffer_size)
 
+    # Setup Pitch
+    lino.pitch_o.set_unit("midi")
+    lino.pitch_o.set_tolerance(lino.tolerance)
+    gt_arr, tempo, total_step = lino.midi_arr(PATH_TO_MIDI)
+    index = 0
+    step_cur = 0
+    pitch_list = []
+    police_speed = 0
+    thief_position = thief.rect.centerx
+    
+    # Update the Interface and Grade
     while True:
-        #####
-        #record_pitch = recordingTool()
-        #if block_time <= time_limit:
-        #    note_list.append(record_pitch)
-        #else:
-        #    time_limit += 1
-        ######
+        if not only_m==0:
+            gf.update_screen(ai_settings, screen, thief, police, step, step_score, win, image_Win, lose, image_Lose, police_speed, lino_score, lino_score_width, lino_bar_rect) 
+        else:
+            metronome(bpm, 4)
+            only_m=1
+            time_lino = ti.time()
+
         time_start=ti.time()
         time+=1
-        if time>=timelimited:
-            lose=True
-        if thief.rect.centerx-police.rect.centerx<=10 and not lose:
-            win=True
-
         gf.check_events(ai_settings, screen, thief, police)
-        #police_speed = 0
-        police_speed=police.speed
-        if time%10==0:
+
+        # Pitch Tracking
+        audiobuffer = stream.read(lino.buffer_size)
+        pitch = lino.get_pitch(audiobuffer)
+        t_cur = ti.time() - time_lino
+        gt_cur = lino.get_gt(t_cur, gt_arr[index,:])
+
+        # Grading Strategy
+        if lino.score_strategy(gt_cur, pitch, t_cur, gt_arr[0,0]) == True :
+            score = 'null'
+        else:
+            pitch_list.append(pitch)
+           
+        if time%20==0:
             thief.update()
             police.update()
-        if time%200==0:
-            #######
-            note_list.append(recordingTool())
-            step_cur = policeman_step(note_list, midi_note(ai_settings.notesClass, block_time), step_cur)
-            ########
-            police_speed=step_cur/total_step#0.5*generate_score(midi_note(ai_settings.notesClass,block_time),recordingTool())
-            print(block_time)
-            print(note_list)
-            print(recordingTool())
-            print(police_speed)
-            note_list = []
-            #print(midi_note(ai_settings.notesClass,block_time))
-            #print(recordingTool())
-        if not only_m==0:
-            gf.update_screen(ai_settings, screen, thief, police, step, step_score, win, image_Win, lose, image_Lose,police_speed,image_Piano)
-        else:
-            metronome(ai_settings.bpm, 4)
-            only_m=1
-        step += ai_settings.thief_speed_factor
+        
         time_end = ti.time()
-        step_score += 2.65*step_time/ai_settings.end_time*(1-0.1144)*ai_settings.score_width
-        block_time+=time_end-time_start
-        step_time=time_end-time_start
+        step_score = (lino_score.get_width() - step_score_blank_left - step_score_blank_right ) * ((time_end-time_lino)/midi_length) + step_score_blank_left
+        
+        # Switch to the next pitch and Update the Policeman Speed
+        if t_cur > gt_arr[index, 1] and index != gt_arr.shape[0]-1:
+            step_cur = lino.policeman_step(pitch_list, gt_arr[index, 3], step_cur)
+            police.rect.centerx = lino.policeman_move(step_cur, total_step, thief_position)
+            index += 1
+            pitch_list=[]
+            print("----------------------------------------To win, you need:", total_step - step_cur, " more steps!------------------------------------------")
+            if total_step == step_cur:
+                gf.update_screen(ai_settings, screen, thief, police, step, step_score, True, image_Win, lose, image_Lose, police_speed, lino_score, lino_score_width, lino_bar_rect) 
+                print('----------------------------------------You Win!!!------------------------------------------')
+                print('Total steps to win:{}, you spend:{} '.format(total_step, index))
+                ti.sleep(5)
+                break
+
+        
+        if index == gt_arr.shape[0]-1 and t_cur > gt_arr[index, 1]:
+            step_cur = lino.policeman_step(pitch_list, gt_arr[index, 3], step_cur)
+            police.rect.centerx = lino.policeman_move(step_cur, total_step, thief_position)
+            if total_step == step_cur:
+                gf.update_screen(ai_settings, screen, thief, police, step, step_score, True, image_Win, False, image_Lose, police_speed, lino_score, lino_score_width, lino_bar_rect) 
+                print('----------------------------------------You Win!!!------------------------------------------')
+                print('Total steps to win:{}, you spend:{} '.format(total_step, index))
+                ti.sleep(5)
+                break
+            else:
+                gf.update_screen(ai_settings, screen, thief, police, step, step_score, win, image_Win, True, image_Lose, police_speed, lino_score, lino_score_width, lino_bar_rect) 
+                print('----------------------------------------You Lose!!!------------------------------------------')   
+                ti.sleep(5)
+                break
+            
 
 run_game()

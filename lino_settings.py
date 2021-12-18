@@ -9,7 +9,7 @@ from trans_midi import midi_arr, get_gt
 from score_function import generate_score, percentage, forward_or_back
 from midi_and_metronome import metronome, play_note
 from sklearn.metrics import mean_squared_error
-from condition import policeman_step
+
 import pretty_midi
 from scipy.io.wavfile import write
 
@@ -36,7 +36,7 @@ class lino_settings():
         for i in range(len(notesClass)):
             tolerance = (notesClass[i].end - notesClass[i].start) / 2 + notesClass[i].end
             pitch_arr[i,:] = np.array([notesClass[i].start, notesClass[i].end, tolerance ,notesClass[i].pitch])
-        total_step  = round(len(notesClass) * 0.2, 0)
+        total_step  = round(len(notesClass) * 0.3, 0)
         self.generateMetronome(midi_path)
         gt_arr = self.check_arr(pitch_arr)
         return gt_arr, tempo, total_step
@@ -103,15 +103,6 @@ class lino_settings():
         return (midi)
 
 
-
-    
-        # self.pitch_o = self.pitch_o.set_unit("midi")
-        # self.pitch_o = self.pitch_o.set_tolerance(self.tolerance)
-
-        # self.pitch_o = aubio.pitch("default", self.win_s, self.hop_s, self.samplerate)
-        # pitch_o.set_unit("midi")
-        # pitch_o.set_tolerance(tolerance)
-
     def get_pitch(self, audiobuffer):
         signal = np.fromstring(audiobuffer, dtype=np.float32)
         pitch = self.pitch_o(signal)[0]
@@ -120,3 +111,40 @@ class lino_settings():
     def score_strategy(self,gt_cur, pitch, t_cur, gt_arr):
         if (gt_cur == -1 and pitch == 0) or gt_cur == -2 or t_cur <= gt_arr or pitch >= 96:
             return True
+
+    def get_gt(self, t_cur, gt_arr):
+
+        if t_cur >= gt_arr[0] and t_cur <= gt_arr[1]:
+            gt_cur = gt_arr[3]
+        elif t_cur <= gt_arr[2] and t_cur >= gt_arr[1]: 
+            gt_cur = -2
+        else:
+            gt_cur = -1
+      
+        return gt_cur
+
+    def generate_score_tmp(self, pitch_arr, gt):
+        score_tmp = []
+        for pitch in pitch_arr:
+            score_cur = generate_score(pitch, gt)
+            score_tmp.append(score_cur)
+
+        return score_tmp
+
+    def policeman_step(self, pitch_arr, gt, step_cur):
+        if gt == 0:
+            step = forward_or_back(step_cur, 0)
+            return step
+        pitch_arr = np.array(pitch_arr)
+        score_tmp = self.generate_score_tmp(pitch_arr, gt)
+        percent = percentage(score_tmp)
+        step = forward_or_back(step_cur, percent)
+        return step
+    
+    def policeman_move(self, step_cur, total_step, thief_position):
+        return (step_cur / total_step) * thief_position
+
+    def get_midi_length(self,midi_path):
+        midi_data = pretty_midi.PrettyMIDI(midi_path)
+        midi_length = midi_data.get_end_time()
+        return midi_length
